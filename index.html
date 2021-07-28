@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+
+	<title> Test Page </title>
+
+
+	<meta name="viewport" content="initial-scale=1.0, width=device-width" />
+	<script src="https://js.api.here.com/v3/3.1/mapsjs-core.js" type="text/javascript" charset="utf-8"></script>
+	<script src="https://js.api.here.com/v3/3.1/mapsjs-service.js" type="text/javascript" charset="utf-8"></script>
+	<script src="https://js.api.here.com/v3/3.1/mapsjs-ui.js" type="text/javascript" charset="utf-8"></script>
+	<script src="https://js.api.here.com/v3/3.1/mapsjs-mapevents.js" type="text/javascript" charset="utf-8"></script>
+
+	<link rel="stylesheet" type="text/css" href="https://js.api.here.com/v3/3.1/mapsjs-ui.css" />
+
+	</head>
+
+
+	<body>
+
+
+
+		<table>
+
+
+
+		<tr>
+			<td width = "1200px">
+				<!-- this contains the map -->
+				<div style="width: 1200px; height: 640px" id="mapContainer"></div>
+			</td>
+			<td>
+
+				<table>
+
+
+
+				<tr>
+					<!-- this contains the List of the points -->
+					<td>
+						<label> Center Lat </label><input id = "cLat" size = "8">
+						<label> Center Lon </label><input id = "cLon" size = "8" />
+						<label> Line Width </label><input id = "lWid" size = "8" value = 1 />
+						<!--label> Center Lon </label><input id = "cLon" -->
+						<textarea id = "rawVals" rows = "30" cols = "36"> </textarea>
+					</td>
+				</tr>
+
+
+				<tr>
+					<!-- this contains controls !!  -->
+					<td>
+						<button id = "" onclick = "drawline();"> Load PolyLine WITHOUT snapping </button> <br/>
+						<button id = "" onclick = "drawline_useSNAP();">SNAP Polyline </button> <br/>
+						<button id = "clrbtn" onclick = "set_resetMap();"> Clear </button> <br/>
+						<button id = "" onclick = "moveCar();"> Move Car </button> <br/>
+					</td>
+
+
+				</tr>
+
+
+
+
+				</table>
+			</td>
+
+		</tr>
+
+
+		<tr>
+			<!-- this contains controls !!  -->
+
+		</tr>
+
+
+
+
+		</table>
+
+
+
+		<script>
+
+			var points = [];
+			var Lats   = [];
+			var Lons   = [];
+
+			var currCarLoc = 0;
+
+			var marker;
+
+
+			// Initialize the platform object:
+			var platform = new H.service.Platform({
+				'apikey': '{NtiaYPXrTCZSCcB4rBnTyufc6gHmHka1HCn34cPoEng}'
+			});
+
+			// Obtain the default map types from the platform object
+			var maptypes = platform.createDefaultLayers();
+
+			// Instantiate (and display) a map object:
+			var map = new H.Map(
+					document.getElementById('mapContainer'),
+					maptypes.vector.normal.map,
+					{
+						zoom: 10,
+						center: { lng: 13.4, lat: 52.51 }
+					}
+				);																									////THIS can't be started at the beginning, because the element needs to be created first.
+
+
+
+
+			var behavior = new H.mapevents.Behavior(new H.mapevents.MapEvents(map));
+
+			var ui = H.ui.UI.createDefault(map, maptypes);
+
+
+			document.getElementById('cLat').value = 52.51;
+			document.getElementById('cLon').value = 13.4;
+
+			function drawline() {
+
+				let rawVals = document.getElementById('rawVals').value;
+
+				let rawCoords = rawVals.split('\n');
+
+				// var lats = [];
+				// var lons = [];
+
+
+
+				for( i = 0; i < rawCoords.length ; i++) {
+
+					var oneCoord = rawCoords[i].split(',');
+					// lats.push(oneCoord[0]);
+					// lons.push(oneCoord[1]);
+
+					// console.log(oneCoord.length);
+
+					if(oneCoord.length < 2) continue;
+
+					var pnt = { lat : oneCoord[0].trim(), lng : oneCoord[1].trim() }
+					points.push(pnt);
+
+					Lats.push(parseFloat(oneCoord[0].trim()));
+					Lons.push(parseFloat(oneCoord[1].trim()));
+
+				}
+
+				var col0Max_Normalize = 255;
+				var col1Max_Normalize = 255;
+
+				var col0Max = points.length;
+				var col0Min = 0;
+
+				var col1Max = 0;
+				var col1Min = points.length;
+
+				for (i = 0; i < points.length -1; i++) {
+
+					var col0 = (col0Max - i) / (col0Max - col0Min) * col0Max_Normalize;
+					var col1 = (col1Max - i) / (col1Max - col1Min) * col1Max_Normalize;
+
+					var linestring = new H.geo.LineString();
+					var pntStp = [ points[i], points[i+1]];
+					// console.log(pntStp);
+
+					pntStp.forEach(function(point) {
+						linestring.pushPoint(point);
+					});
+
+					var colorGrad = 'rgba(' + col0 + ',150,' + col1 + ',255)';
+					// console.log(colorGrad);
+
+					var polyline = new H.map.Polyline(linestring, { style: { lineWidth: document.getElementById('lWid').value, strokeColor : colorGrad }});
+
+
+					map.addObject(polyline);
+
+				}
+
+				var latMax = Math.max(...Lats);
+				var latMin = Math.min(...Lats);
+				var lonMax = Math.max(...Lons);
+				var lonMin = Math.min(...Lons);
+
+				// console.log(Lats);
+				// console.log(latMax);
+
+				var bbox = new H.geo.Rect(latMax+0.1,lonMin-0.1, latMin-0.1, lonMax+0.1);
+				// Zoom the map to fit the rectangle:
+				map.getViewModel().setLookAtData({bounds: bbox});
+
+
+
+			}
+
+			function set_resetMap() {
+
+				document.getElementById('mapContainer').innerHTML = "";
+				//map.removeObjects(map.getObjects ());
+
+				points = [];
+				Lats   = [];
+				Lons   = [];
+
+				map = new H.Map(
+					document.getElementById('mapContainer'),
+					maptypes.vector.normal.map,
+					{
+						zoom: 10,
+						center: { lng: /*9.8*/ document.getElementById('cLon').value, lat: /*50.51*/ document.getElementById('cLat').value}
+					}
+				);																									////THIS can't be started at the beginning, because the element needs to be created first.
+
+
+				behavior = new H.mapevents.Behavior(new H.mapevents.MapEvents(map));
+
+				ui = H.ui.UI.createDefault(map, maptypes);
+
+				alert("map and polylines have been reset");
+			}
+
+			function drawline_useSNAP() {
+
+				points = [];
+				Lats   = [];
+				Lons   = [];
+
+				let rawVals = document.getElementById('rawVals').value;
+
+				let rawCoords = rawVals.split('\n');
+
+				// var lats = [];
+				// var lons = [];
+
+
+
+				for( i = 0; i < rawCoords.length ; i++) {
+
+					var oneCoord = rawCoords[i].split(',');
+					// lats.push(oneCoord[0]);
+					// lons.push(oneCoord[1]);
+
+					//console.log(oneCoord.length);
+
+					if(oneCoord.length < 2) continue;
+
+					var pnt = { lat : oneCoord[0].trim(), lng : oneCoord[1].trim() }
+					points.push(pnt);
+
+					Lats.push(parseFloat(oneCoord[0].trim()));
+					Lons.push(parseFloat(oneCoord[1].trim()));
+
+				}
+
+				var qString ="" ;
+
+				for (i = 0; i < points.length ; i++) {
+
+					var p = points[i];
+					qString = qString + p.lng + ',' + p.lat + ';';
+
+
+				}
+
+				// console.log(qString);
+
+				qString = qString.slice(0,-1);
+
+				var pathOutput = getJSON('https://router.project-osrm.org/route/v1/driving/' + qString +'?geometries=geojson&alternatives=true&steps=true&generate_hints=false');
+
+				var pathOutput_json = JSON.parse(pathOutput)
+				var pathOutput_pnts = pathOutput_json.routes[0].geometry.coordinates;
+
+
+				var col0Max_Normalize = 255;
+				var col1Max_Normalize = 255;
+
+				var col0Max = points.length;
+				var col0Min = 0;
+
+				var col1Max = 0;
+				var col1Min = points.length;
+
+				for (i = 0; i < pathOutput_pnts.length -1; i++) {
+
+					var col0 = (pathOutput_pnts.length - i) / (pathOutput_pnts.length - 0) * col0Max_Normalize;
+					var col1 = ( i) / (pathOutput_pnts.length - 0) * col1Max_Normalize;
+
+					console.log(col0);
+					console.log(col1);
+
+
+					var linestring = new H.geo.LineString();
+
+					var pnt0 = { lat : pathOutput_pnts[i][1], lng : pathOutput_pnts[i][0]} ;
+					var pnt1 = { lat : pathOutput_pnts[i+1][1], lng : pathOutput_pnts[i+1][0]} ;
+					// pathOutput_pnts[i+1];
+
+					var pntStp = [ pnt0, pnt1];
+					// console.log(pntStp);
+
+					pntStp.forEach(function(point) {
+						linestring.pushPoint(point);
+					});
+
+					var colorGrad = 'rgba(' + col0 + ',150,' + col1 + ',255)';
+					// console.log(colorGrad);
+
+					var polyline = new H.map.Polyline(linestring, { style: { lineWidth: document.getElementById('lWid').value, strokeColor : colorGrad }});
+
+
+					map.addObject(polyline);
+
+					Lats.push(parseFloat(pathOutput_pnts[i][1]));
+					Lons.push(parseFloat(pathOutput_pnts[i][0]));
+
+
+				}
+
+
+				points = [];
+
+				for (i = 0; i < pathOutput_pnts.length; i++) {
+
+					var col0 = (pathOutput_pnts.length - i) / (pathOutput_pnts.length - 0) * col0Max_Normalize;
+					var col1 = ( i) / (pathOutput_pnts.length - 0) * col1Max_Normalize;
+
+					//console.log(col0);
+					//console.log(col1);
+
+
+					var linestring = new H.geo.LineString();
+
+					var pnt0 = { lat : pathOutput_pnts[i][1], lng : pathOutput_pnts[i][0]} ;
+
+					points.push(pnt0);
+
+
+				}
+
+				var latMax = Math.max(...Lats);
+				var latMin = Math.min(...Lats);
+				var lonMax = Math.max(...Lons);
+				var lonMin = Math.min(...Lons);
+
+				// console.log(Lats);
+				// console.log(latMax);
+
+				var bbox = new H.geo.Rect(latMax+0.1,lonMin-0.1, latMin-0.1, lonMax+0.1);
+				// Zoom the map to fit the rectangle:
+				map.getViewModel().setLookAtData({bounds: bbox});
+
+
+				// console.log(parseFloat(points[0].lat));
+				// console.log(parseFloat(points[0].lng));
+
+
+				var LocationOfMarker = { lat: parseFloat(points[0].lat), lng: parseFloat(points[0].lng) };
+				currCarLoc = 0;
+				var pngIcon = new H.map.Icon("https://cdn4.iconfinder.com/data/icons/unigrid-vehicles/60/001_hatchback_car_combi-256.png", { size: { w: 56, h: 56 } });
+				marker = new H.map.Marker(LocationOfMarker, { icon: pngIcon });
+				map.addObject(marker);
+
+
+
+
+
+			}
+
+			function getJSON(yourUrl){
+				var Httpreq = new XMLHttpRequest(); // a new request
+				Httpreq.open("GET",yourUrl,false);
+				Httpreq.send(null);
+				return Httpreq.responseText;
+			}
+
+
+			function moveCar() {
+
+				map.removeObject(marker);
+				console.log(currCarLoc);
+				if ( currCarLoc < points.length -1) currCarLoc = currCarLoc +1;
+				console.log(currCarLoc);
+
+				var LocationOfMarker = { lat: parseFloat(points[currCarLoc].lat), lng: parseFloat(points[currCarLoc].lng) };
+				//currCarLoc = 0;
+				var pngIcon = new H.map.Icon("https://cdn4.iconfinder.com/data/icons/unigrid-vehicles/60/001_hatchback_car_combi-256.png", { size: { w: 56, h: 56 } });
+				marker = new H.map.Marker(LocationOfMarker, { icon: pngIcon });
+				map.addObject(marker);
+
+			}
+
+
+		</script>
+
+
+	</body>
+
+</html>
