@@ -5,6 +5,7 @@
 
 	<title> Test Page </title>
 
+	<!--
 
 	<meta name="viewport" content="initial-scale=1.0, width=device-width" />
 	<script src="https://js.api.here.com/v3/3.1/mapsjs-core.js" type="text/javascript" charset="utf-8"></script>
@@ -13,6 +14,45 @@
 	<script src="https://js.api.here.com/v3/3.1/mapsjs-mapevents.js" type="text/javascript" charset="utf-8"></script>
 
 	<link rel="stylesheet" type="text/css" href="https://js.api.here.com/v3/3.1/mapsjs-ui.css" />
+
+	-->
+
+
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width,initial-scale=1">
+		<!--meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: https://*.here.com 'unsafe-eval'; style-src 'self' https://*.here.com/ 'unsafe-inline'; script-src 'self' https://*.here.com/ 'unsafe-inline' 'unsafe-eval';  media-src *"-->
+
+		<script src="/assets/hereAccount-b8b1cd08baeb7bde1f8d355a6a390118231f1f7c562be305c93a71ce64a7c923.js"></script>
+
+		<script src="https://account.here.com/js/sdk/sso.min.js"></script>
+		<script>
+			var app_id = "inCUge3uprAQEtRaruyaZ8",
+				app_code = "9Vyk_MElhgPCytA7z3iuPA",
+				app_id_cors = "BTp1kLd1IpptcQe2Ir3h",
+				app_code_cors = "zMDPaKTAFR2g3wF3h4ok7w",
+				app_id_jp = "dPNJ6XzVATngXoWhlqx7",
+				app_code_jp = "qUYWNNt0HKi8B9JhTGKNIA",
+				api_key = "3lKmytJ9qwM22dCKUNNbu2C6zab5zWXYPy5lGKGdYM4",
+				api_key_jp = "aqzbtK2GQGtD2ZtxWNcWPyeLCCGbOgbRFLe4Bntfi9U";
+		</script>
+
+			<script type="text/javascript" charset="UTF-8" src="https://js.api.here.com/v3/3.0/mapsjs-core.js"></script>
+			<script type="text/javascript" charset="UTF-8" src="https://js.api.here.com/v3/3.0/mapsjs-service.js"></script>
+			<script type="text/javascript" charset="UTF-8" src="https://js.api.here.com/v3/3.0/mapsjs-mapevents.js"></script>
+			<script type="text/javascript" charset="UTF-8" src="https://js.api.here.com/v3/3.0/mapsjs-ui.js"></script>
+			<script type="text/javascript" charset="UTF-8" src="https://js.api.here.com/v3/3.0/mapsjs-clustering.js"></script>
+			<script type="text/javascript" charset="UTF-8" src="https://js.api.here.com/v3/3.0/mapsjs-data.js"></script>
+			<link rel="stylesheet" type="text/css" href="https://js.api.here.com/v3/3.0/mapsjs-ui.css" />
+			<script src="jquery_modded.js"></script>
+			<!-- note that we have to include this one. this one is jquery with sizzle.js added in it -->
+
+
+		<link rel="shortcut icon" type="image/x-icon" href="/assets/favicon-b11b589c436fb4354ff7ae08b125a27ad29e211ead5de1ab480114e3b8951a16.ico" />
+		<link rel="stylesheet" media="screen" href="/assets/application-dd0aa5ce52ef9d7bb3ce0759c0de13c69304b4e66719083474e36a46f627fb3e.css" data-turbolinks-track="true" />
+		<meta name="csrf-param" content="authenticity_token" />
+		<meta name="csrf-token" content="TFLvM3rCFDF8dI+sWNOXWxuVpZvvqZIXtS3kig0740fDxt55s43mP8ZRTaRTijaybi8Fdu1pTrgpJAWGL82NCw==" />
+
+
 
 	</head>
 
@@ -39,11 +79,12 @@
 				<tr>
 					<!-- this contains the List of the points -->
 					<td>
-						<label> Center Lat </label><input id = "cLat" size = "8">
+						<label> Center Lat </label><input id = "cLat" size = "8" />
 						<label> Center Lon </label><input id = "cLon" size = "8" />
-						<label> Line Width </label><input id = "lWid" size = "8" value = 1 />
+						<label> Line Width </label><input id = "lWid" size = "8" value = 1 /><br/>
 						<!--label> Center Lon </label><input id = "cLon" -->
-						<textarea id = "rawVals" rows = "30" cols = "36"> </textarea>
+						<textarea id = "rawVals" rows = "25" cols = "36"> </textarea> <br/>
+						<label> New coord </label><textarea id = "nCoord"  rows = "10" cols = "36"  ></textarea> <br/>
 					</td>
 				</tr>
 
@@ -54,7 +95,8 @@
 						<button id = "" onclick = "drawline();"> Load PolyLine WITHOUT snapping </button> <br/>
 						<button id = "" onclick = "drawline_useSNAP();">SNAP Polyline </button> <br/>
 						<button id = "clrbtn" onclick = "set_resetMap();"> Clear </button> <br/>
-						<button id = "" onclick = "moveCar();"> Move Car </button> <br/>
+						<button id = "" onclick = "add_and_moveCar();"> Move Car </button> <br/>
+						<button id = "" onclick = "add_and_moveCar();"> OPTIMIZE by removing old points </button> <br/>
 					</td>
 
 
@@ -89,12 +131,16 @@
 
 			var currCarLoc = 0;
 
-			var marker;
+			var marker = 0;
+
+			var hidpi = ('devicePixelRatio' in window && devicePixelRatio > 1);
+			var secure = (location.protocol === 'https:') ? true : false; // check if the site was loaded via secure connection
 
 
 			// Initialize the platform object:
 			var platform = new H.service.Platform({
-				'apikey': '{NtiaYPXrTCZSCcB4rBnTyufc6gHmHka1HCn34cPoEng}'
+				// 'apikey': /*'{NtiaYPXrTCZSCcB4rBnTyufc6gHmHka1HCn34cPoEng}'*/ '{3lKmytJ9qwM22dCKUNNbu2C6zab5zWXYPy5lGKGdYM4}'
+					app_code: app_code,	app_id: app_id,	useHTTPS: secure
 			});
 
 			// Obtain the default map types from the platform object
@@ -103,7 +149,7 @@
 			// Instantiate (and display) a map object:
 			var map = new H.Map(
 					document.getElementById('mapContainer'),
-					maptypes.vector.normal.map,
+					maptypes.normal.map,
 					{
 						zoom: 10,
 						center: { lng: 13.4, lat: 52.51 }
@@ -190,9 +236,10 @@
 				// console.log(Lats);
 				// console.log(latMax);
 
-				var bbox = new H.geo.Rect(latMax+0.1,lonMin-0.1, latMin-0.1, lonMax+0.1);
+				var bbox = new H.geo.Rect(latMax+0.001,lonMin-0.001, latMin-0.001, lonMax+0.001);
 				// Zoom the map to fit the rectangle:
-				map.getViewModel().setLookAtData({bounds: bbox});
+				// map.getViewModel().setLookAtData({bounds: bbox});
+				map.setViewBounds(bbox);
 
 
 
@@ -207,141 +254,202 @@
 				Lats   = [];
 				Lons   = [];
 
+
+				currCarLoc = 0;
+
+				if (marker != 0) map.removeObject(marker);
+
+				hidpi = ('devicePixelRatio' in window && devicePixelRatio > 1);
+				secure = (location.protocol === 'https:') ? true : false; // check if the site was loaded via secure connection
+
+
+				// Initialize the platform object:
+				platform = new H.service.Platform({
+					// 'apikey': /*'{NtiaYPXrTCZSCcB4rBnTyufc6gHmHka1HCn34cPoEng}'*/ '{3lKmytJ9qwM22dCKUNNbu2C6zab5zWXYPy5lGKGdYM4}'
+						app_code: app_code,	app_id: app_id,	useHTTPS: secure
+				});
+
+				// Obtain the default map types from the platform object
+				maptypes = platform.createDefaultLayers();
+
+				// Instantiate (and display) a map object:
 				map = new H.Map(
-					document.getElementById('mapContainer'),
-					maptypes.vector.normal.map,
-					{
-						zoom: 10,
-						center: { lng: /*9.8*/ document.getElementById('cLon').value, lat: /*50.51*/ document.getElementById('cLat').value}
-					}
-				);																									////THIS can't be started at the beginning, because the element needs to be created first.
+						document.getElementById('mapContainer'),
+						maptypes.normal.map,
+						{
+							zoom: 10,
+							center: { lng: /*9.8*/ document.getElementById('cLon').value, lat: /*50.51*/ document.getElementById('cLat').value}
+						}
+					);																									////THIS can't be started at the beginning, because the element needs to be created first.
+
+
 
 
 				behavior = new H.mapevents.Behavior(new H.mapevents.MapEvents(map));
 
 				ui = H.ui.UI.createDefault(map, maptypes);
-
-				alert("map and polylines have been reset");
 			}
 
 			function drawline_useSNAP() {
 
-				points = [];
-				Lats   = [];
-				Lons   = [];
-
-				let rawVals = document.getElementById('rawVals').value;
-
-				let rawCoords = rawVals.split('\n');
-
-				// var lats = [];
-				// var lons = [];
+				var content = document.getElementById('rawVals').value;												// NOTE: SET THS VALUE to conain your data
+																													// each corrodinate pair in a line.
+																													// each line consists of latitude, a comma, then longitude
+																													// example :
+																													// 52.41 , 13.10
+				console.log(content);
+				content = "LATITUDE,LONGITUDE\n" + content;															// header added.
 
 
+				var mode_speed = 'fastest'	;																		// set the routing choice :
+																													// from enum [ fastest | shortest | balanced ];
+																													// for this application fastest is good
 
-				for( i = 0; i < rawCoords.length ; i++) {
+				var mode_transportType = 'car';																		// set the choice of vehicle.
+																													// from enum  [car | pedestrian | carHOV | publicTransport | publicTransportTimeTable | truck | bicycle ]
+																													// for this application, we choose 'car'
 
-					var oneCoord = rawCoords[i].split(',');
-					// lats.push(oneCoord[0]);
-					// lons.push(oneCoord[1]);
+				var mode_trafficType = 'disabled';																	// take into account traffic conditions.
+																													// from enum Enum [enabled | disabled | default]
 
-					//console.log(oneCoord.length);
+				var url = 'https://fleet.api.here.com/2/calculateroute.json?routeMatch=1&mode='+mode_speed+';'+mode_transportType+';traffic:'+mode_trafficType;
+				url= url.concat( "&app_id=" + app_id_cors + "&app_code=" + app_code_cors );							// this is the big issue to extract data from HERE maps.
 
-					if(oneCoord.length < 2) continue;
+				$.ajax({
+					url: url,
+					dataType: "json",
+					async: true,
+					type: 'post',
+					data:content,
+					contentType: 'application/octet-stream',
+					success: function(data) {
+						display_results(data);
+					},
+					error: function(xhr, status, e) {
+						alert((xhr.responseJSON.issues[0].message ? xhr.responseJSON.issues[0].message :  xhr.responseJSON.issues[0] ) || xhr.responseJSON);
+					}
+				});																									// here i have used the V8 engine (from here maps) (same name as the chrome jaasscript engine...)
+																													// instead of the OSRM engine, and normal map mode
+																													// works faster than vector map mode.
 
-					var pnt = { lat : oneCoord[0].trim(), lng : oneCoord[1].trim() }
-					points.push(pnt);
-
-					Lats.push(parseFloat(oneCoord[0].trim()));
-					Lons.push(parseFloat(oneCoord[1].trim()));
-
-				}
-
-				var qString ="" ;
-
-				for (i = 0; i < points.length ; i++) {
-
-					var p = points[i];
-					qString = qString + p.lng + ',' + p.lat + ';';
 
 
-				}
 
-				// console.log(qString);
+			}
 
-				qString = qString.slice(0,-1);
 
-				var pathOutput = getJSON('https://router.project-osrm.org/route/v1/driving/' + qString +'?geometries=geojson&alternatives=true&steps=true&generate_hints=false');
 
-				var pathOutput_json = JSON.parse(pathOutput)
-				var pathOutput_pnts = pathOutput_json.routes[0].geometry.coordinates;
+			function display_results(matchOutput) {
 
+				var full_geometry = new Array();
+
+				var routeLinks = matchOutput.response.route[0].leg[0].link; /*matchOutput.response.route[0].waypoint*/;
+
+				// console.log(routeLinks);
 
 				var col0Max_Normalize = 255;
 				var col1Max_Normalize = 255;
 
-				var col0Max = points.length;
+				var col0Max = routeLinks.length;
 				var col0Min = 0;
 
 				var col1Max = 0;
-				var col1Min = points.length;
+				var col1Min = routeLinks.length;
 
-				for (i = 0; i < pathOutput_pnts.length -1; i++) {
-
-					var col0 = (pathOutput_pnts.length - i) / (pathOutput_pnts.length - 0) * col0Max_Normalize;
-					var col1 = ( i) / (pathOutput_pnts.length - 0) * col1Max_Normalize;
-
-					console.log(col0);
-					console.log(col1);
+				Lats = [] ;
+				Lons = [] ;
 
 
-					var linestring = new H.geo.LineString();
+				if (marker != 0) map.removeObject(marker);
+				map.removeObjects(map.getObjects ());
 
-					var pnt0 = { lat : pathOutput_pnts[i][1], lng : pathOutput_pnts[i][0]} ;
-					var pnt1 = { lat : pathOutput_pnts[i+1][1], lng : pathOutput_pnts[i+1][0]} ;
-					// pathOutput_pnts[i+1];
+				for (var l = 0; l < routeLinks.length; l++) {
 
-					var pntStp = [ pnt0, pnt1];
-					// console.log(pntStp);
+					var coords1 = routeLinks[l].shape ;
+					var coords2 = new H.geo.Strip();
 
-					pntStp.forEach(function(point) {
-						linestring.pushPoint(point);
-					});
+					for (var c = 0; c < coords1.length; c += 2){
+						coords2.pushLatLngAlt(coords1[c], coords1[c+1], null);
+						full_geometry.push(new H.geo.Point(coords1[c], coords1[c+1]));
+					}
 
-					var colorGrad = 'rgba(' + col0 + ',150,' + col1 + ',255)';
-					// console.log(colorGrad);
+					var na = coords2.na;
 
-					var polyline = new H.map.Polyline(linestring, { style: { lineWidth: document.getElementById('lWid').value, strokeColor : colorGrad }});
+					// console.log(na);
 
+					for( var cc = 0; cc < na.length; cc += 3) {
+						Lats.push( na [cc] );
+						Lons.push( na [cc + 1] );
+					}
+
+
+
+					var col0 = (routeLinks.length - l) / (routeLinks.length - 0) * col0Max_Normalize;
+					var col1 = ( l) / (routeLinks.length - 0) * col1Max_Normalize;
+
+					var colorGrad = 'rgba(' + col0 + ',' + (col1 + col0) / 2.0 + ',' + col1 + ',255)';														// NOTICE: change this variable to control color.
+
+					polyline = new H.map.Polyline(coords2, {zIndex: 3, style: { lineWidth: document.getElementById('lWid').value, strokeColor : colorGrad }});
 
 					map.addObject(polyline);
 
-					Lats.push(parseFloat(pathOutput_pnts[i][1]));
-					Lons.push(parseFloat(pathOutput_pnts[i][0]));
+					/*
+
+
+
+
+					for (var l = 0; l < pathOutput_pnts.length; l++) {
+						var p = pathOutput_pnts[l];
+
+						Lats.push(p.mappedPosition.latitude);
+						Lons.push(p.mappedPosition.longitude);
+
+					}
+
+
+
+
+					for (i = 0; i < pathOutput_pnts.length -1; i++) {
+
+						var col0 = (pathOutput_pnts.length - i) / (pathOutput_pnts.length - 0) * col0Max_Normalize;
+						var col1 = ( i) / (pathOutput_pnts.length - 0) * col1Max_Normalize;
+
+						console.log(col0);
+						console.log(col1);
+
+
+						var linestring = new H.geo.LineString();
+
+						var pnt0 = { lat : Lats[i]  , lng : Lons[i]  } ;
+						var pnt1 = { lat : Lats[i+1], lng : Lons[i+1]} ;
+						// pathOutput_pnts[i+1];
+
+						var pntStp = [ pnt0, pnt1];
+						// console.log(pntStp);
+
+						pntStp.forEach(function(point) {
+							linestring.pushPoint(point);
+						});
+
+						var colorGrad = 'rgba(' + col0 + ',150,' + col1 + ',255)';
+						// console.log(colorGrad);
+
+						var polyline = new H.map.Polyline(linestring, { style: { lineWidth: document.getElementById('lWid').value, strokeColor : colorGrad }});
+
+
+						map.addObject(polyline);
+
+
+
+
+					}
+					*/
 
 
 				}
 
-
-				points = [];
-
-				for (i = 0; i < pathOutput_pnts.length; i++) {
-
-					var col0 = (pathOutput_pnts.length - i) / (pathOutput_pnts.length - 0) * col0Max_Normalize;
-					var col1 = ( i) / (pathOutput_pnts.length - 0) * col1Max_Normalize;
-
-					//console.log(col0);
-					//console.log(col1);
-
-
-					var linestring = new H.geo.LineString();
-
-					var pnt0 = { lat : pathOutput_pnts[i][1], lng : pathOutput_pnts[i][0]} ;
-
-					points.push(pnt0);
-
-
-				}
+				// console.log(Lats);
+				// console.log(Lons);
 
 				var latMax = Math.max(...Lats);
 				var latMin = Math.min(...Lats);
@@ -351,47 +459,103 @@
 				// console.log(Lats);
 				// console.log(latMax);
 
-				var bbox = new H.geo.Rect(latMax+0.1,lonMin-0.1, latMin-0.1, lonMax+0.1);
+				var bbox = new H.geo.Rect(latMax+0.001,lonMin-0.001, latMin-0.001, lonMax+0.001);
 				// Zoom the map to fit the rectangle:
-				map.getViewModel().setLookAtData({bounds: bbox});
+				// map.getViewModel().setLookAtData({bounds: bbox});
+				map.setViewBounds(bbox);
 
 
-				// console.log(parseFloat(points[0].lat));
-				// console.log(parseFloat(points[0].lng));
+				var LocationOfMarker = { lat: Lats[Lats.length -1], lng:  Lons[Lons.length-1] };
 
-
-				var LocationOfMarker = { lat: parseFloat(points[0].lat), lng: parseFloat(points[0].lng) };
 				currCarLoc = 0;
-				var pngIcon = new H.map.Icon("https://cdn4.iconfinder.com/data/icons/unigrid-vehicles/60/001_hatchback_car_combi-256.png", { size: { w: 56, h: 56 } });
+				var pngIcon = new H.map.Icon("https://cdn4.iconfinder.com/data/icons/unigrid-vehicles/60/001_hatchback_car_combi-256.png", {			//// NOTICE change this URL for the icon you need
+						size: { w: 56, h: 56 },
+						anchor: new H.math.Point(56 / 2, 56 / 2)													// change ALL of these numbers for a custom marker
+					});
 				marker = new H.map.Marker(LocationOfMarker, { icon: pngIcon });
 				map.addObject(marker);
 
+			}
+
+
+
+
+			function add_and_moveCar() {
+
+				var newCoord = get_newCoord()																		// NOTICE in this example the get_newCoord function
+																													// is already setting the new coordinate in the total coordinate list.
+
+				drawline_useSNAP_byClearing();
+
+
+
+			}
+
+
+			function drawline_useSNAP_byClearing() {
+
+				var content = document.getElementById('rawVals').value;												// NOTE: SET THS VALUE to conain your data
+																													// each corrodinate pair in a line.
+																													// each line consists of latitude, a comma, then longitude
+																													// example :
+																													// 52.41 , 13.10
+				console.log(content);
+				content = "LATITUDE,LONGITUDE\n" + content;															// header added.
+
+
+				var mode_speed = 'fastest'	;																		// set the routing choice :
+																													// from enum [ fastest | shortest | balanced ];
+																													// for this application fastest is good
+
+				var mode_transportType = 'car';																		// set the choice of vehicle.
+																													// from enum  [car | pedestrian | carHOV | publicTransport | publicTransportTimeTable | truck | bicycle ]
+																													// for this application, we choose 'car'
+
+				var mode_trafficType = 'disabled';																	// take into account traffic conditions.
+																													// from enum Enum [enabled | disabled | default]
+
+				var url = 'https://fleet.api.here.com/2/calculateroute.json?routeMatch=1&mode='+mode_speed+';'+mode_transportType+';traffic:'+mode_trafficType;
+				url= url.concat( "&app_id=" + app_id_cors + "&app_code=" + app_code_cors );							// this is the big issue to extract data from HERE maps.
+
+				$.ajax({
+					url: url,
+					dataType: "json",
+					async: true,
+					type: 'post',
+					data:content,
+					contentType: 'application/octet-stream',
+					success: function(data) {
+						display_results(data);
+					},
+					error: function(xhr, status, e) {
+						alert((xhr.responseJSON.issues[0].message ? xhr.responseJSON.issues[0].message :  xhr.responseJSON.issues[0] ) || xhr.responseJSON);
+					}
+				});																									// here i have used the V8 engine (from here maps) (same name as the chrome jaasscript engine...)
+																													// instead of the OSRM engine, and normal map mode
+																													// works faster than vector map mode.
 
 
 
 
 			}
 
-			function getJSON(yourUrl){
-				var Httpreq = new XMLHttpRequest(); // a new request
-				Httpreq.open("GET",yourUrl,false);
-				Httpreq.send(null);
-				return Httpreq.responseText;
-			}
+
+			function get_newCoord () {
 
 
-			function moveCar() {
+				var allCoords = document.getElementById("nCoord").value.split('\n');
+				//console.log(allCoords);
 
-				map.removeObject(marker);
-				console.log(currCarLoc);
-				if ( currCarLoc < points.length -1) currCarLoc = currCarLoc +1;
-				console.log(currCarLoc);
+				var firstCoord = allCoords.shift();
+				console.log(firstCoord);
 
-				var LocationOfMarker = { lat: parseFloat(points[currCarLoc].lat), lng: parseFloat(points[currCarLoc].lng) };
-				//currCarLoc = 0;
-				var pngIcon = new H.map.Icon("https://cdn4.iconfinder.com/data/icons/unigrid-vehicles/60/001_hatchback_car_combi-256.png", { size: { w: 56, h: 56 } });
-				marker = new H.map.Marker(LocationOfMarker, { icon: pngIcon });
-				map.addObject(marker);
+				document.getElementById("nCoord").value = allCoords.join('\n');
+
+				if(document.getElementById("rawVals").value [ document.getElementById("rawVals").value.length-1] != '\n')
+					document.getElementById("rawVals").value = document.getElementById("rawVals").value + '\n'
+				document.getElementById("rawVals").value = document.getElementById("rawVals").value  + firstCoord;
+
+				return firstCoord;
 
 			}
 
